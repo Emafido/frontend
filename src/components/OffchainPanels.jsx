@@ -1,4 +1,4 @@
-const fmt = (n, cur = 'NGN') => `${cur} ${Number(n).toLocaleString()}`
+const fmt = (n, cur = 'NGN') => (n == null ? '—' : `${cur} ${Number(n).toLocaleString()}`)
 
 export function HouseholdPanel({ household, currency }) {
   return (
@@ -36,16 +36,31 @@ export function ContributionsPanel({ savings, currency }) {
   const list = savings.contributions || []
   return (
     <section className="panel bank">
-      <h2>Contribution history</h2>
-      {list.length === 0 ? <p className="muted">No contributions yet.</p> : (
-        <ul className="rows">
-          {list.map((c) => (
-            <li key={c.month}>
-              <span>{c.month}</span>
-              <span>{c.amount === 0 ? <i className="muted">no contribution</i> : <b>{fmt(c.amount, currency)}</b>} <span className="muted">· balance {Number(c.balanceAfter).toLocaleString()}</span></span>
-            </li>
-          ))}
-        </ul>
+      <h2>Savings</h2>
+      <ul className="rows">
+        <li><span>Current balance</span><b>{fmt(savings.currentBalance, currency)}</b></li>
+        <li><span>Total contributed</span><b>{fmt(savings.totalContributed, currency)}</b></li>
+        <li><span>Total withdrawn</span><b>{fmt(savings.totalWithdrawn, currency)}</b></li>
+        <li><span>Monthly target</span><b>{fmt(savings.plannedMonthly, currency)}</b></li>
+        <li><span>Contribution frequency</span><b>{savings.frequency ?? '—'}</b></li>
+      </ul>
+      <h3 className="subhead">History</h3>
+      {list.length === 0 ? <p className="muted">No history yet.</p> : (
+        <div className="wrap">
+          <table className="tbl">
+            <thead><tr><th>Month</th><th>Planned</th><th>Actual</th><th>Balance after</th></tr></thead>
+            <tbody>
+              {list.map((c) => (
+                <tr key={c.month}>
+                  <td>{c.month}</td>
+                  <td>{Number(c.planned).toLocaleString()}</td>
+                  <td>{Number(c.amount).toLocaleString()}</td>
+                  <td>{Number(c.balanceAfter).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   )
