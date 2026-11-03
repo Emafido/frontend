@@ -5,17 +5,22 @@ export default function OnchainPanel({ wallet, defaults }) {
   const { signer, status, wrongNetwork } = wallet
   const [goal, setGoal] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [reading, setReading] = useState(false)
   const [msg, setMsg] = useState(null) // { kind: 'ok' | 'err' | 'pending', text, hash? }
   const [target, setTarget] = useState(defaults.targetAmount)
   const [date, setDate] = useState(defaults.targetDate)
   const [amount, setAmount] = useState(5000)
   const ready = status === 'connected' && !wrongNetwork
 
-  const refresh = useCallback(async () => {
-    try { setGoal(await readGoal(signer)) } catch (e) { setMsg({ kind: 'err', text: friendlyError(e) }) }
-  }, [signer])
+const refresh = useCallback(async () => {
+  setReading(true)
+  try { setGoal(await readGoal(signer)) } catch (e) { setMsg({ kind: 'err', text: friendlyError(e) }) } finally { setReading(false) }
+}, [signer])
   useEffect(() => { if (ready) refresh(); else setGoal(null) }, [ready, refresh])
-
+const onGetGoal = async () => {
+  await refresh()
+  setMsg((m) => (m?.kind === 'err' ? m : { kind: 'ok', text: 'Goal read from the contract.' }))
+}
   const run = async (label, fn) => {
     setBusy(true); setMsg({ kind: 'pending', text: `${label}: confirm in your wallet…` })
     try {
@@ -31,9 +36,15 @@ export default function OnchainPanel({ wallet, defaults }) {
       <p className="muted">Celo Sepolia test network. These are demo records written by your wallet. No money moves and nothing here is checked against a real payment.</p>
       {!ready ? <p>{status === 'connected' ? 'Switch to Celo Sepolia to continue.' : 'Connect a wallet to read or write your on-chain goal.'}</p> : (
         <>
-          {goal?.active ? (
-            <p className="big">{goal.totalContributed.toString()} <span>recorded of {goal.targetAmount.toString()} · due {new Date(goal.targetDate * 1000).toLocaleDateString()}</span></p>
-          ) : <p>No active on-chain goal for this wallet yet.</p>}
+                  <button className="ghost" disabled={busy || reading} onClick={onGetGoal}>{reading ? 'Reading…' : 'Get goal'}</button>
+          {goal && (goal.active ? (
+            <ul className="rows">
+              <li><span>Target amount</span><b>{goal.targetAmount.toString()}</b></li>
+              <li><span>Target date</span><b>{new Date(goal.targetDate * 1000).toLocaleDateString()}</b></li>
+              <li><span>Total contributed</span><b>{goal.totalContributed.toString()}</b></li>
+              <li><span>Active</span><b>yes</b></li>
+            </ul>
+          ) : <p>No active on-chain goal for this wallet yet.</p>)}
           <div className="form">
             <label>Target amount<input type="number" min="1" value={target} onChange={(e) => setTarget(e.target.value)} /></label>
             <label>Target date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
