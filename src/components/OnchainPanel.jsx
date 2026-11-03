@@ -37,9 +37,14 @@ const onGetGoal = async () => {
       {!ready ? <p>{status === 'connected' ? 'Switch to Celo Sepolia to continue.' : 'Connect a wallet to read or write your on-chain goal.'}</p> : (
         <>
                   <button className="ghost" disabled={busy || reading} onClick={onGetGoal}>{reading ? 'Reading…' : 'Get goal'}</button>
-          {goal?.active ? (
-            <p className="big">{goal.totalContributed.toString()} <span>recorded of {goal.targetAmount.toString()} · due {new Date(goal.targetDate * 1000).toLocaleDateString()}</span></p>
-          ) : <p>No active on-chain goal for this wallet yet.</p>}
+          {goal && (goal.active ? (
+            <ul className="rows">
+              <li><span>Target amount</span><b>{goal.targetAmount.toString()}</b></li>
+              <li><span>Target date</span><b>{new Date(goal.targetDate * 1000).toLocaleDateString()}</b></li>
+              <li><span>Total contributed</span><b>{goal.totalContributed.toString()}</b></li>
+              <li><span>Active</span><b>yes</b></li>
+            </ul>
+          ) : <p>No active on-chain goal for this wallet yet.</p>)}
           <div className="form">
             <label>Target amount<input type="number" min="1" value={target} onChange={(e) => setTarget(e.target.value)} /></label>
             <label>Target date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
